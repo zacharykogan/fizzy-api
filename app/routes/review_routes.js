@@ -50,7 +50,10 @@ router.get('/reviews/:id', requireToken, (req, res, next) => {
   Review.findById(req.params.id)
     .then(handle404)
     // if `findById` is successful, respond with 200 and "review" JSON
-    .then(review => res.status(200).json({ review: review.toObject() }))
+    .then(review => {
+      requireOwnership(req, review)
+      res.status(200).json({ review: review.toObject() })
+    })
     // if an error occurs, pass it to the handler
     .catch(next)
 })
@@ -99,16 +102,14 @@ router.patch('/reviews/:id', requireToken, removeBlanks, (req, res, next) => {
 router.delete('/reviews/:id', requireToken, (req, res, next) => {
   Review.findById(req.params.id)
     .then(handle404)
-    .then(review => {
-      // throw an error if current user doesn't own `review`
+    .then((review) => {
       requireOwnership(req, review)
-      // delete the review ONLY IF the above didn't throw
       review.deleteOne()
-    })
-    // send back 204 and no content if the deletion succeeded
-    .then(() => res.sendStatus(204))
-    // if an error occurs, pass it to the handler
-    .catch(next)
+		})
+		// send back 204 and no content if the deletion succeeded
+		.then(() => res.sendStatus(204))
+		// if an error occurs, pass it to the handler
+		.catch(next)
 })
 
 module.exports = router
