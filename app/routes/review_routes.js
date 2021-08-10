@@ -18,7 +18,7 @@ const requireOwnership = customErrors.requireOwnership
 // this is middleware that will remove blank fields from `req.body`, e.g.
 // { review: { title: '', text: 'foo' } } -> { review: { text: 'foo' } }
 const removeBlanks = require('../../lib/remove_blank_fields')
-// const review = require('./../models/review')
+const review = require('./../models/review')
 // passing this as a second argument to `router.<verb>` will make it
 // so that a token MUST be passed for that route to be available
 // it will also set `req.user`
@@ -31,6 +31,21 @@ const router = express.Router()
 // GET /reviews
 router.get('/reviews/all', requireToken, (req, res, next) => {
   Review.find()
+    .then(reviews => {
+      // `reviews` is an array of Mongoose documents
+      // needs to be converted to POJO, so we use `.map` to
+      // apply `.toObject` to each one
+      return reviews.map(review => review.toObject())
+    })
+    // respond with status 200 and JSON of the reviews
+    .then(reviews => res.status(200).json({ reviews: reviews }))
+    // if an error occurs, pass it to the handler
+    .catch(next)
+})
+
+// GET /reviews
+router.get('/reviews', requireToken, (req, res, next) => {
+  Review.find({ owner: req.user._id })
     .then(reviews => {
       // `reviews` is an array of Mongoose documents
       // needs to be converted to POJO, so we use `.map` to
