@@ -28,8 +28,8 @@ const requireToken = passport.authenticate('bearer', { session: false })
 const router = express.Router()
 
 // INDEX
-// GET /reviews
-router.get('/reviews', requireToken, (req, res, next) => {
+// GET ALL Reviews
+router.get('/reviews/all', requireToken, (req, res, next) => {
   Review.find()
     .then(reviews => {
       // `reviews` is an array of Mongoose documents
@@ -40,6 +40,21 @@ router.get('/reviews', requireToken, (req, res, next) => {
     // respond with status 200 and JSON of the reviews
     .then(reviews => res.status(200).json({ reviews: reviews }))
     // if an error occurs, pass it to the handler
+    .catch(next)
+})
+
+// GET LOGGED IN USER'S REVIEWS
+router.get('/reviews', requireToken, (req, res, next) => {
+  Review.find({ 'owner': req.user.id })
+    .then((reviews) => {
+      // `reviews` is an array of Mongoose documents
+      // needs to be converted to POJO, so we use `.map` to
+      // apply `.toObject` to each one
+      return reviews.map((review) => review.toObject())
+    })
+  // respond with status 200 and JSON of the reviews
+    .then((reviews) => res.status(200).json({ reviews: reviews }))
+  // if an error occurs, pass it to the handler
     .catch(next)
 })
 
@@ -105,11 +120,11 @@ router.delete('/reviews/:id', requireToken, (req, res, next) => {
     .then((review) => {
       requireOwnership(req, review)
       review.deleteOne()
-		})
-		// send back 204 and no content if the deletion succeeded
-		.then(() => res.sendStatus(204))
-		// if an error occurs, pass it to the handler
-		.catch(next)
+    })
+  // send back 204 and no content if the deletion succeeded
+    .then(() => res.sendStatus(204))
+  // if an error occurs, pass it to the handler
+    .catch(next)
 })
 
 module.exports = router
