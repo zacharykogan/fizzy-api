@@ -29,7 +29,7 @@ const router = express.Router()
 
 // INDEX
 // GET /reviews
-router.get('/reviews', requireToken, (req, res, next) => {
+router.get('/reviews/all', requireToken, (req, res, next) => {
   Review.find()
     .then(reviews => {
       // `reviews` is an array of Mongoose documents
@@ -105,11 +105,11 @@ router.delete('/reviews/:id', requireToken, (req, res, next) => {
     .then((review) => {
       requireOwnership(req, review)
       review.deleteOne()
-		})
-		// send back 204 and no content if the deletion succeeded
-		.then(() => res.sendStatus(204))
-		// if an error occurs, pass it to the handler
-		.catch(next)
+    })
+  // send back 204 and no content if the deletion succeeded
+    .then(() => res.sendStatus(204))
+  // if an error occurs, pass it to the handler
+    .catch(next)
 })
 
 module.exports = router
